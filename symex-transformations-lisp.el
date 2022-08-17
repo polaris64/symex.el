@@ -47,7 +47,7 @@
   (interactive "p")
   (let ((last-command nil)  ; see symex-yank re: last-command
         (start (point))
-        (end (symex--get-end-point count)))
+        (end (symex-lisp--get-end-point count)))
     (kill-region start end))
   (cond ((or (symex--current-line-empty-p)         ; ^<>$
              (save-excursion (evil-last-non-blank) ; (<>$
@@ -63,7 +63,7 @@
          ;; on the same line, then don't attempt to join lines
          (let ((original-position (point)))
            (when (symex--go-backward)
-             (let ((previous-symex-end-pos (symex--get-end-point 1)))
+             (let ((previous-symex-end-pos (symex-lisp--get-end-point 1)))
                (unless (symex--intervening-comment-line-p previous-symex-end-pos
                                                           original-position)
                  (goto-char previous-symex-end-pos)
@@ -93,7 +93,7 @@
   "Change COUNT symexes."
   (interactive "p")
   (let ((start (point))
-        (end (symex--get-end-point count)))
+        (end (symex-lisp--get-end-point count)))
     (kill-region start end))
   (symex-enter-lowest))
 
@@ -194,7 +194,7 @@
   ;; independent entries in the kill ring
   (let ((last-command nil))
     (let ((start (point))
-          (end (symex--get-end-point count)))
+          (end (symex-lisp--get-end-point count)))
       (copy-region-as-kill start end))))
 
 (provide 'symex-transformations-lisp)
