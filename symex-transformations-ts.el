@@ -34,36 +34,40 @@
 The buffer's current Tree Sitter tree is saved before BODY is
 evaluated. The new tree is then compared and the current node is
 selected according to the ranges that have changed."
-  (let ((prev-tree (gensym))
-        (res (gensym))
-        (changed-ranges (gensym)))
+  (if (eq (symex-ts--current-ts-library) 'internal)
+      ;; TODO: Implement symex-ts--handle-tree-modification for the internal tree sitter library
+      '(error "Unable to perform edit: the Emacs internal tree sitter library is not yet supported")
 
-    `(let ((,prev-tree tree-sitter-tree))
+    (let ((prev-tree (gensym))
+          (res (gensym))
+          (changed-ranges (gensym)))
 
-       ;; Execute BODY, bind to RES
-       (let ((,res (progn ,@body)))
+      `(let ((,prev-tree tree-sitter-tree))
 
-         ;; Get changes from previous to current tree
-         (let ((,changed-ranges (tsc-changed-ranges ,prev-tree tree-sitter-tree)))
+         ;; Execute BODY, bind to RES
+         (let ((,res (progn ,@body)))
 
-           ;; Move point to the first changed range if possible
-           (when (and (> (length ,changed-ranges) 0)
-                      (> (length (elt ,changed-ranges 0)) 0))
-             (goto-char (elt (elt ,changed-ranges 0) 0))
+           ;; Get changes from previous to current tree
+           (let ((,changed-ranges (tsc-changed-ranges ,prev-tree tree-sitter-tree)))
 
-             ;; If the change starts on a carriage return, move
-             ;; forward one character
-             (when (char-equal ?\C-j (char-after))
-               (forward-char 1)))
+             ;; Move point to the first changed range if possible
+             (when (and (> (length ,changed-ranges) 0)
+                        (> (length (elt ,changed-ranges 0)) 0))
+               (goto-char (elt (elt ,changed-ranges 0) 0))
 
-           ;; Update current node from point and reindent if necessary
-           (symex-ts-set-current-node-from-point)
-           (when symex-highlight-p
-             (symex--update-overlay))
-           (indent-according-to-mode))
+               ;; If the change starts on a carriage return, move
+               ;; forward one character
+               (when (char-equal ?\C-j (char-after))
+                 (forward-char 1)))
 
-         ;; Return the result of evaluating BODY
-         ,res))))
+             ;; Update current node from point and reindent if necessary
+             (symex-ts-set-current-node-from-point)
+             (when symex-highlight-p
+               (symex--update-overlay))
+             (indent-according-to-mode))
+
+           ;; Return the result of evaluating BODY
+           ,res)))))
 
 (defun symex-ts-change-node-forward (&optional count)
   "Delete COUNT nodes forward from the current node and enter Insert state."
